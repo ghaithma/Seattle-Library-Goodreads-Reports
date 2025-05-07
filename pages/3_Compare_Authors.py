@@ -4,8 +4,31 @@ import streamlit as st
 from snowflake.snowpark.context import get_active_session
 
 
+def pad(text, pad_with = '0', pad_to = 2):
+    return f"{pad_with * pad_to}{text}"[-1 * pad_to:]
+
 def to_list(series):
     return ",".join(list(series.astype(str)))
+
+def get_colors(n):
+    COLORS = ['#556B2F', '#B8860B', '#3CB371', '#6495ED', '#F5F5DC', '#00FF7F', '#9400D3']
+    repeats = (n // len(COLORS)) + ((n % len(COLORS)) > 0)
+    return (COLORS * repeats)[0:n]
+
+def divide_month(month):
+    return tuple(map(int, month.split('-')))
+
+def join_month(year, month):
+    return f"{year}-{pad(month)}"
+
+def get_daterange(from_date='2010-05', to_date='2020-01'):
+    from_year, from_month = divide_month(from_date)
+    to_year, to_month = divide_month(to_date)
+    daterange = list()
+    for year in range(from_year, to_year+1):
+        for month in range(1, 13):
+            daterange.append(join_month(year, month))
+    return daterange[from_month-1:-1 * (12-to_month)]
 
 @st.cache_data
 def search_authors_with_checkouts(_session, author_name, query_limit=10):
@@ -202,9 +225,9 @@ with works:
         )
     
     st.subheader("Authors Monthly Checkouts")
-    authors_ratings_df = get_authors_checkouts(session, authors_list)
+    authors_checkouts_df = get_authors_checkouts(session, authors_list)
     st.dataframe(
-        authors_ratings_df,
+        authors_checkouts_df,
         column_config=column_configuration,
         use_container_width=True,
         hide_index=True
@@ -216,56 +239,83 @@ with compare:
         st.warning('You must select at least one author')
         st.stop()
     
-    st.subheader("Authors first and last publication year")
-    activity_df = get_authors_active_years(session, authors_list)
-    st.dataframe(
-        activity_df,
-        column_config=column_configuration,
-        use_container_width=True,
-        hide_index=True
-        )
-    
-    st.subheader("Books By Author")
     books_by_authors_df = get_books_by_authors(session, authors_list)
-    st.dataframe(
-        books_by_authors_df,
-        column_config=column_configuration,
-        use_container_width=True,
-        hide_index=True
-        )
-
-    
-    st.subheader("Authors Monthly Ratings")
     authors_ratings_df = get_authors_ratings(session, authors_list)
-    st.dataframe(
-        authors_ratings_df,
-        column_config=column_configuration,
-        use_container_width=True,
-        hide_index=True
-        )
+    authors_checkouts_df = get_authors_checkouts(session, authors_list)
+    
+    authors_books_count = books_by_authors_df[['AUTHOR_ID', 'NAME', 'BIB_NUMBER']].groupby(by=['AUTHOR_ID', 'NAME']).count().reset_index().sort_values(by=['BIB_NUMBER'])
+    st.subheader("Books By Author")
+    st.bar_chart(
+        authors_books_count,
+        x='NAME',
+        y='BIB_NUMBER',
+        x_label='Author Name',
+        y_label='Book Count',
+        color=get_colors(1)
+    )
+
+    min_rating_month = authors_ratings_df.MONTH.min()
+    max_rating_month = authors_ratings_df.MONTH.max()
+    rating_daterange = get_daterange(min_rating_month, max_rating_month)
+
+    st.subheader("Authors Monthly Ratings")
+    oldest_year, oldest_month = divide_month(min_rating_month)
+    newest_year, newest_month = divide_month(max_rating_month)
+    year_range = range(oldest_year, newest_year + 1)
+
+    col = st.columns(4)
+    with col[0]:
+        from_year = st.selectbox("From year", year_range)
+    with col[1]:
+        first_month = oldest_month if from_year == oldest_year else 1
+        last_month = newest_month if from_year == newest_year else 12
+        from_month = st.selectbox("From month", range(first_month, last_month + 1))
+    with col[2]:
+        to_year = st.selectbox("To year", year_range, index=len(year_range)-1)
+    with col[3]:
+        first_month = oldest_month if to_year == oldest_year else 1
+        last_month = newest_month if to_year == newest_year else 12
+        to_month_range = range(first_month, last_month + 1)
+        to_month = st.selectbox("To month", to_month_range, index=len(to_month_range) - 1)
+    
+    from_date = join_month(from_year, from_month)
+    to_date = join_month(to_year, to_month)
+
+    rating_series_df = authors_ratings_df[(authors_ratings_df.MONTH >= from_date) & (authors_ratings_df.MONTH <= to_date)].groupby(by=['NAME', 'MONTH']).mean().reset_index()
+    # rating_series_df = pd.pivot_table(authors_ratings_df, values='AVG_RATING', aggfunc='mean', index=['NAME', 'MONTH'] ).reset_index()
+    st.line_chart(
+        rating_series_df.pivot(index='MONTH', columns='NAME', values='AVG_RATING').sort_values(by='MONTH')
+    )
     
     st.subheader("Authors Monthly Checkouts")
-    authors_ratings_df = get_authors_checkouts(session, authors_list)
-    st.dataframe(
-        authors_ratings_df,
-        column_config=column_configuration,
-        use_container_width=True,
-        hide_index=True
-        )
-    # activity_df = {}
-    # for person in selected_authors:
-    #     activity_df[df.iloc[person]["name"]] = df.iloc[person]["activity"]
-    # activity_df = pd.DataFrame(activity_df)
+    min_checkouts_month = authors_checkouts_df.MONTH.min()
+    max_checkouts_month = authors_checkouts_df.MONTH.max()
+    checkouts_daterange = get_daterange(min_checkouts_month, max_checkouts_month)
 
-    # daily_activity_df = {}
-    # for person in selected_authors:
-    #     daily_activity_df[df.iloc[person]["name"]] = df.iloc[person]["daily_activity"]
-    # daily_activity_df = pd.DataFrame(daily_activity_df)
+    oldest_year_c, oldest_month_c = divide_month(min_checkouts_month)
+    newest_year_c, newest_month_c = divide_month(max_checkouts_month)
+    year_range_c = range(oldest_year_c, newest_year_c + 1)
 
-    # if len(selected_authors) > 0:
-    #     st.header("Daily activity comparison")
-    #     st.bar_chart(daily_activity_df)
-    #     st.header("Yearly activity comparison")
-    #     st.line_chart(activity_df)
-    # else:
-    #     st.markdown("No members selected.")
+    col = st.columns(4)
+    with col[0]:
+        from_year_c = st.selectbox("From year", year_range_c)
+    with col[1]:
+        first_month_c = oldest_month_c if from_year_c == oldest_year_c else 1
+        last_month_c = newest_month_c if from_year_c == newest_year_c else 12
+        from_month_c = st.selectbox("From month", range(first_month_c, last_month_c + 1))
+    with col[2]:
+        to_year_c = st.selectbox("To year", year_range_c, index=len(year_range_c)-1)
+    with col[3]:
+        first_month_c = oldest_month_c if to_year_c == oldest_year_c else 1
+        last_month_c = newest_month_c if to_year_c == newest_year_c else 12
+        to_month_range_c = range(first_month_c, last_month_c + 1)
+        to_month_c = st.selectbox("To month", to_month_range_c, index=len(to_month_range_c) - 1)
+    
+    from_date_c = join_month(from_year_c, from_month_c)
+    to_date_c = join_month(to_year_c, to_month_c)
+
+    checkouts_series_df = authors_checkouts_df[(authors_checkouts_df.MONTH >= from_date_c) & (authors_checkouts_df.MONTH <= to_date_c)].groupby(by=['NAME', 'MONTH']).sum().reset_index()
+    # checkouts_series_df = pd.pivot_table(authors_checkoutss_df, values='AVG_checkouts', aggfunc='mean', index=['NAME', 'MONTH'] ).reset_index()
+    st.line_chart(
+        checkouts_series_df.pivot(index='MONTH', columns='NAME', values='CHECKOUTS').sort_values(by='MONTH')
+    )
