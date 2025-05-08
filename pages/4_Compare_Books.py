@@ -188,7 +188,8 @@ with select:
         st.session_state.selected_books,
         column_config=column_configuration,
         use_container_width=True,
-        hide_index=True
+        hide_index=True,
+        key='CB-S-SB'
     )
 
     if st.button("Clear"):
@@ -217,7 +218,8 @@ with works:
         books_by_authors_df,
         column_config=column_configuration,
         use_container_width=True,
-        hide_index=True
+        hide_index=True,
+        key='CB-W-OB'
         )
 
     
@@ -227,7 +229,8 @@ with works:
         books_ratings_df,
         column_config=column_configuration,
         use_container_width=True,
-        hide_index=True
+        hide_index=True,
+        key='CB-W-MR'
         )
     
     st.subheader("Books Monthly Checkouts")
@@ -236,7 +239,8 @@ with works:
         books_checkouts_df,
         column_config=column_configuration,
         use_container_width=True,
-        hide_index=True
+        hide_index=True,
+        key='CB-W-MC'
         )
 
 with compare:
@@ -259,18 +263,18 @@ with compare:
 
     col = st.columns(4)
     with col[0]:
-        from_year = st.selectbox("From year", year_range)
+        from_year = st.selectbox("From year", year_range, key='CB-C-RFY')
     with col[1]:
         first_month = oldest_month if from_year == oldest_year else 1
         last_month = newest_month if from_year == newest_year else 12
-        from_month = st.selectbox("From month", range(first_month, last_month + 1))
+        from_month = st.selectbox("From month", range(first_month, last_month + 1), key='CB-C-RFM')
     with col[2]:
-        to_year = st.selectbox("To year", year_range, index=len(year_range)-1)
+        to_year = st.selectbox("To year", year_range, index=len(year_range)-1, key='CB-C-RTY')
     with col[3]:
         first_month = oldest_month if to_year == oldest_year else 1
         last_month = newest_month if to_year == newest_year else 12
         to_month_range = range(first_month, last_month + 1)
-        to_month = st.selectbox("To month", to_month_range, index=len(to_month_range) - 1)
+        to_month = st.selectbox("To month", to_month_range, index=len(to_month_range) - 1, key='CB-C-RTM')
     
     from_date = join_month(from_year, from_month)
     to_date = join_month(to_year, to_month)
@@ -278,7 +282,8 @@ with compare:
     rating_series_df = books_ratings_df[(books_ratings_df.MONTH >= from_date) & (books_ratings_df.MONTH <= to_date)].groupby(by=['TITLE', 'MONTH']).mean().reset_index()
     # rating_series_df = pd.pivot_table(authors_ratings_df, values='AVG_RATING', aggfunc='mean', index=['NAME', 'MONTH'] ).reset_index()
     st.line_chart(
-        rating_series_df.pivot(index='MONTH', columns='TITLE', values='AVG_RATING').sort_values(by='MONTH')
+        rating_series_df.pivot(index='MONTH', columns='TITLE', values='AVG_RATING').sort_values(by='MONTH'),
+        key='CB-C-RLC'
     )
     
     st.subheader("Books Monthly Checkouts")
@@ -292,18 +297,18 @@ with compare:
 
     col = st.columns(4)
     with col[0]:
-        from_year_c = st.selectbox("From year", year_range_c, key='BFYC')
+        from_year_c = st.selectbox("From year", year_range_c, key='CB-C-CFY')
     with col[1]:
         first_month_c = oldest_month_c if from_year_c == oldest_year_c else 1
         last_month_c = newest_month_c if from_year_c == newest_year_c else 12
-        from_month_c = st.selectbox("From month", range(first_month_c, last_month_c + 1), key='BFMC')
+        from_month_c = st.selectbox("From month", range(first_month_c, last_month_c + 1), key='CB-C-CFM')
     with col[2]:
-        to_year_c = st.selectbox("To year", year_range_c, index=len(year_range_c)-1, key='BTYC')
+        to_year_c = st.selectbox("To year", year_range_c, index=len(year_range_c)-1, key='CB-C-CTY')
     with col[3]:
         first_month_c = oldest_month_c if to_year_c == oldest_year_c else 1
         last_month_c = newest_month_c if to_year_c == newest_year_c else 12
         to_month_range_c = range(first_month_c, last_month_c + 1)
-        to_month_c = st.selectbox("To month", to_month_range_c, index=len(to_month_range_c) - 1, key='BTMC')
+        to_month_c = st.selectbox("To month", to_month_range_c, index=len(to_month_range_c) - 1, key='CB-C-CTM')
     
     from_date_c = join_month(from_year_c, from_month_c)
     to_date_c = join_month(to_year_c, to_month_c)

@@ -265,18 +265,18 @@ with compare:
 
     col = st.columns(4)
     with col[0]:
-        from_year = st.selectbox("From year", year_range)
+        from_year = st.selectbox("From year", year_range, key='CA-C-RFY')
     with col[1]:
         first_month = oldest_month if from_year == oldest_year else 1
         last_month = newest_month if from_year == newest_year else 12
-        from_month = st.selectbox("From month", range(first_month, last_month + 1))
+        from_month = st.selectbox("From month", range(first_month, last_month + 1), key='CA-C-RFM')
     with col[2]:
-        to_year = st.selectbox("To year", year_range, index=len(year_range)-1)
+        to_year = st.selectbox("To year", year_range, index=len(year_range)-1, key='CA-C-RTY')
     with col[3]:
         first_month = oldest_month if to_year == oldest_year else 1
         last_month = newest_month if to_year == newest_year else 12
         to_month_range = range(first_month, last_month + 1)
-        to_month = st.selectbox("To month", to_month_range, index=len(to_month_range) - 1)
+        to_month = st.selectbox("To month", to_month_range, index=len(to_month_range) - 1, key='CA-C-RTM')
     
     from_date = join_month(from_year, from_month)
     to_date = join_month(to_year, to_month)
@@ -298,18 +298,18 @@ with compare:
 
     col = st.columns(4)
     with col[0]:
-        from_year_c = st.selectbox("From year", year_range_c)
+        from_year_c = st.selectbox("From year", year_range_c, key='CA-C-CFY')
     with col[1]:
         first_month_c = oldest_month_c if from_year_c == oldest_year_c else 1
         last_month_c = newest_month_c if from_year_c == newest_year_c else 12
-        from_month_c = st.selectbox("From month", range(first_month_c, last_month_c + 1))
+        from_month_c = st.selectbox("From month", range(first_month_c, last_month_c + 1), key='CA-C-CFM')
     with col[2]:
-        to_year_c = st.selectbox("To year", year_range_c, index=len(year_range_c)-1)
+        to_year_c = st.selectbox("To year", year_range_c, index=len(year_range_c)-1, key='CA-C-CTY')
     with col[3]:
         first_month_c = oldest_month_c if to_year_c == oldest_year_c else 1
         last_month_c = newest_month_c if to_year_c == newest_year_c else 12
         to_month_range_c = range(first_month_c, last_month_c + 1)
-        to_month_c = st.selectbox("To month", to_month_range_c, index=len(to_month_range_c) - 1)
+        to_month_c = st.selectbox("To month", to_month_range_c, index=len(to_month_range_c) - 1, key='CA-C-CTM')
     
     from_date_c = join_month(from_year_c, from_month_c)
     to_date_c = join_month(to_year_c, to_month_c)
