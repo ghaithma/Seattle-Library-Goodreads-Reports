@@ -3,6 +3,11 @@ import streamlit as st
 import pandas as pd
 from datetime import datetime
 
+st.set_page_config(
+    page_title="Popular Books By Review",
+    page_icon="📚"
+    )
+
 def get_reviews_daterange(_connection):
     query = """
         select min(date), max(date) from reviews;

@@ -2,6 +2,11 @@ import numpy as np
 import pandas as pd
 import streamlit as st
 
+st.set_page_config(
+    page_title="Compare Books",
+    page_icon="📚"
+    )
+
 def pad(text, pad_with = '0', pad_to = 2):
     return f"{pad_with * pad_to}{text}"[-1 * pad_to:]
 

@@ -3,6 +3,7 @@ import streamlit as st
 st.set_page_config(
     page_title="Library System Reports",
     page_icon="📚",
+    initial_sidebar_state='expanded'
 )
 
 st.write("# Welcome to SLS Report Page")

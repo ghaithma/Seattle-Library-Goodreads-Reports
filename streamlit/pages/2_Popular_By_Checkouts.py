@@ -2,6 +2,11 @@
 import streamlit as st
 import pandas as pd
 
+st.set_page_config(
+    page_title="Popular Books By Checkouts",
+    page_icon="📚"
+    )
+
 def get_checkouts_daterange(_connection):
     query = """
         select min(month), max(month) from checkouts;
