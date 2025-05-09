@@ -12,8 +12,8 @@ def get_checkouts_daterange(_connection):
         select min(month), max(month) from checkouts;
     """
     data = _connection.query(query)
-    min_month = data.iloc[0][0].split('-')
-    max_month = data.iloc[0][1].split('-')
+    min_month = data.iloc[0]['MIN(MONTH)'].split('-')
+    max_month = data.iloc[0]['MAX(MONTH)'].split('-')
 
     return (int(min_month[0]), int(min_month[1])), (int(max_month[0]), int(max_month[1]))
 

@@ -13,7 +13,7 @@ def get_reviews_daterange(_connection):
         select min(date), max(date) from reviews;
     """
     data = _connection.query(query)
-    return data.iloc[0][0], data.iloc[0][1]
+    return data.iloc[0]['MIN(DATE)'], data.iloc[0]['MAX(DATE)']
     
 def get_books(_connection):
     query = """
