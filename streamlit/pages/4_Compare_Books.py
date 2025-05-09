@@ -282,8 +282,7 @@ with compare:
     rating_series_df = books_ratings_df[(books_ratings_df.MONTH >= from_date) & (books_ratings_df.MONTH <= to_date)].groupby(by=['TITLE', 'MONTH']).mean().reset_index()
     # rating_series_df = pd.pivot_table(authors_ratings_df, values='AVG_RATING', aggfunc='mean', index=['NAME', 'MONTH'] ).reset_index()
     st.line_chart(
-        rating_series_df.pivot(index='MONTH', columns='TITLE', values='AVG_RATING').sort_values(by='MONTH'),
-        key='CB-C-RLC'
+        rating_series_df.pivot(index='MONTH', columns='TITLE', values='AVG_RATING').sort_values(by='MONTH')
     )
     
     st.subheader("Books Monthly Checkouts")
