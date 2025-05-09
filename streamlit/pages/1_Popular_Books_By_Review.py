@@ -1,24 +1,23 @@
 # Import python packages
 import streamlit as st
-from snowflake.snowpark.context import get_active_session
 import pandas as pd
 from datetime import datetime
 
-def get_reviews_daterange(_session):
+def get_reviews_daterange(_connection):
     query = """
         select min(date), max(date) from reviews;
     """
-    data = _session.sql(query).collect()
-    return data[0][0], data[0][1]
+    data = _connection.query(query)
+    return data.iloc[0][0], data.iloc[0][1]
     
-def get_books(_session):
+def get_books(_connection):
     query = """
     select * from LIBRARYSYSTEM.PUBLIC.BOOKS
     """
-    data = _session.sql(query).collect()
-    return pd.DataFrame(data)
+    data = _connection.query(query)
+    return data
 
-def get_books_with_reviews(_session, from_date, to_date, query_limit, by='count', min_reviews=100):
+def get_books_with_reviews(_connection, from_date, to_date, query_limit, by='count', min_reviews=100):
     order = 'average_rating' if by == 'avg' else 'review_count'
     reviews = f'where review_count >= {min_reviews}' if by == 'avg' else ''
     query = f"""
@@ -35,8 +34,8 @@ def get_books_with_reviews(_session, from_date, to_date, query_limit, by='count'
         order by {order} desc
         limit {query_limit}
     """
-    data = _session.sql(query).collect()
-    return pd.DataFrame(data)
+    data = _connection.query(query)
+    return data
 
 def format_with_commas(number):
     return f"{number:,}"
@@ -47,7 +46,8 @@ def format_with_commas(number):
 st.title("Popular Books By Review")
 
 # Get the current credentials
-session = get_active_session()
+session = st.connection("snowflake")
+
 
 first_review_date, last_review_date = get_reviews_daterange(session)
 

@@ -1,7 +1,6 @@
 import numpy as np
 import pandas as pd
 import streamlit as st
-from snowflake.snowpark.context import get_active_session
 
 
 def pad(text, pad_with = '0', pad_to = 2):
@@ -31,7 +30,7 @@ def get_daterange(from_date='2010-05', to_date='2020-01'):
     return daterange[from_month-1:-1 * (12-to_month)]
 
 @st.cache_data
-def search_authors_with_checkouts(_session, author_name, query_limit=10):
+def search_authors_with_checkouts(_connection, author_name, query_limit=10):
     query = f"""
     select searched_authors.author_id, searched_authors.name, total_checkouts
     from (
@@ -47,10 +46,10 @@ def search_authors_with_checkouts(_session, author_name, query_limit=10):
         order by total_checkouts desc
         limit {query_limit}
         """
-    data = _session.sql(query).collect()
-    return pd.DataFrame(data)
+    data = _connection.query(query)
+    return data
 
-def get_authors_active_years(_session, authors_list):
+def get_authors_active_years(_connection, authors_list):
     query = f"""
     select authors.author_id, authors.name, pub_info.first_pub, pub_info.last_pub 
     from (select author_id, min(publication_year) as first_pub, max(publication_year) as last_pub from authored_book
@@ -60,10 +59,10 @@ def get_authors_active_years(_session, authors_list):
         join authors
         on authors.author_id = pub_info.author_id
     """
-    data = _session.sql(query).collect()
-    return pd.DataFrame(data)
+    data = _connection.query(query)
+    return data
 
-def get_authors_ratings(_session, authors_list):
+def get_authors_ratings(_connection, authors_list):
     query = f"""
         select authors.author_id, authors.name, authors_avg.month, authors_avg.avg_rating, authors_avg.count_rating from
         (select authored_book.author_id, substr(reviews.date, 0, 7) as month, avg(reviews.rating) as avg_rating, count(reviews.rating) as count_rating from authored_book
@@ -74,10 +73,10 @@ def get_authors_ratings(_session, authors_list):
             join authors on authors.author_id = authors_avg.author_id
             order by authors_avg.month desc, author_id
     """
-    data = _session.sql(query).collect()
-    return pd.DataFrame(data)
+    data = _connection.query(query)
+    return data
 
-def get_authors_checkouts(_session, authors_list):
+def get_authors_checkouts(_connection, authors_list):
     query = f"""
     select authors.author_id, authors.name, checkouts.month, sum(checkouts.checkouts) as checkouts
         from authors
@@ -87,10 +86,10 @@ def get_authors_checkouts(_session, authors_list):
         group by authors.author_id, authors.name, checkouts.month
         order by checkouts.month desc, authors.author_id
     """
-    data = _session.sql(query).collect()
-    return pd.DataFrame(data)
+    data = _connection.query(query)
+    return data
 
-def get_books_by_authors(_session, authors_list):
+def get_books_by_authors(_connection, authors_list):
     query = f"""
     select authors.author_id, authors.name, books.bib_number, books.title, books.publication_year, checkouts_agg.checkouts, reviews_agg.avg_rating, reviews_agg.rating_count
         from 
@@ -111,8 +110,8 @@ def get_books_by_authors(_session, authors_list):
         join books on reviews_agg.bib_number = books.bib_number
         join authors on authors.author_id = reviews_agg.author_id
     """
-    data = _session.sql(query).collect()
-    return pd.DataFrame(data)
+    data = _connection.query(query)
+    return data
     
 
 
@@ -152,7 +151,7 @@ if 'selected' not in st.session_state:
 
 select, works, compare = st.tabs(["Select Authors", "Authors Info", "Compare Authors"])
 # Get the current credentials
-session = get_active_session()
+session = st.connection("snowflake")
 
 
 with select:

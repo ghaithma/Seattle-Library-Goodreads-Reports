@@ -1,19 +1,18 @@
 # Import python packages
 import streamlit as st
-from snowflake.snowpark.context import get_active_session
 import pandas as pd
 
-def get_checkouts_daterange(_session):
+def get_checkouts_daterange(_connection):
     query = """
         select min(month), max(month) from checkouts;
     """
-    data = _session.sql(query).collect()
-    min_month = data[0][0].split('-')
-    max_month = data[0][1].split('-')
+    data = _connection.query(query)
+    min_month = data.iloc[0][0].split('-')
+    max_month = data.iloc[0][1].split('-')
 
     return (int(min_month[0]), int(min_month[1])), (int(max_month[0]), int(max_month[1]))
 
-def get_books_with_checkouts(_session, from_date, to_date, query_limit):
+def get_books_with_checkouts(_connection, from_date, to_date, query_limit):
     query = f"""
     select popular_books.bib_number, books.title, books.publication_year, popular_books.total_checkouts
         from (select bib_number, sum(checkouts) as total_checkouts from checkouts
@@ -26,10 +25,10 @@ def get_books_with_checkouts(_session, from_date, to_date, query_limit):
         on popular_books.bib_number = books.bib_number
         order by total_checkouts desc
     """
-    data = _session.sql(query).collect()
-    return pd.DataFrame(data)
+    data = _connection.query(query)
+    return data
 
-def get_authors_with_checkouts(_session, from_date, to_date, query_limit):
+def get_authors_with_checkouts(_connection, from_date, to_date, query_limit):
     query = f"""
     select authors.author_id, authors.name, total_checkouts
         from (select author_id, sum(checkouts) as total_checkouts from checkouts
@@ -42,8 +41,8 @@ def get_authors_with_checkouts(_session, from_date, to_date, query_limit):
         join authors on popular_authors.author_id = authors.author_id
         order by total_checkouts desc
         """
-    data = _session.sql(query).collect()
-    return pd.DataFrame(data)
+    data = _connection.query(query)
+    return data
 
 
 def pad(text, pad_with = '0', pad_to = 2):
@@ -53,7 +52,7 @@ def pad(text, pad_with = '0', pad_to = 2):
 st.title("Popular Books By Checkouts")
 
 # Get the current credentials
-session = get_active_session()
+session = st.connection("snowflake")
 
 first_checkout_month, last_checkout_month = get_checkouts_daterange(session)
 
