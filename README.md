@@ -15,3 +15,6 @@ This project is done as part of a university program for a data warehouse course
 The source includes a section for ETL (Jupyter Notebooks), and a streamlit app that was built as the presentation layer for the final reports.
 
 The code wasn't initially meant to be shared, but if anyone is interested I could clean it up and provide proper documentation.
+
+
+This project is deployed on this [link](https://sls.emayge.sa)
